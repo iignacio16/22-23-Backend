@@ -8,29 +8,26 @@ type postUser = RouterContext <"/user", Record<string | number, string | undefin
 
  const randomIBAN = (Math.floor(100000000000000000000 + Math.random() * 900000000000000000000))
  
- const validarDNI = (dni: any) =>{
 
-    const expresion_regular_dni = /^\d{8}[a-zA-Z]$/;
-   
-    if(expresion_regular_dni.test (dni) == true){
-       const num = dni.substr(0,dni.length-1);
-       const letr = dni.substr(dni.length-1,1);
-       const numero = num % 23;
-       let letra='TRWAGMYFPDXBNJZSQVHLCKET';
-       letra=letra.substring(numero,numero+1);
-      if (letra!=letr.toUpperCase()) {
-         //alert('Dni erroneo, la letra del NIF no se corresponde');
-         return false
-       }else{
-         //alert('Dni correcto');
-         return true
-       }
-    }else{
-       //alert('Dni erroneo, formato no válido');
-       return false
-     }
- }
+ function validarDNI(DNI: string) {
+    const expReg = /^([0-9]{8})([A-Z]{1})$/;
+    const valido = expReg.test(DNI)
+    if (valido == true){
+      return true;
+    } else {
+      return false;
+    }
+}
 
+function validarTelefono(Telefono: string) {
+    const expReg = /^[0-9]{9}$/;
+    const valido = expReg.test(Telefono)
+    if (valido == true){
+      return true;
+    } else {
+      return false;
+    }
+}
  function validarCorreo(email: string){
     const expReg= /^[a-z0-9!#$%&'+/=?^`{|}~-]+(?:.[a-z0-9!#$%&'+/=?^`{|}~-]+)@(?:[a-z0-9](?:[a-z0-9-][a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/; 
     const valido = expReg.test(email);
@@ -52,17 +49,23 @@ type postUser = RouterContext <"/user", Record<string | number, string | undefin
         return;
     }
 
-    const dniValido = validarDNI(value.DNI);
+    const telefonoValido = validarTelefono(value.Telefono);
     const correoValido = validarCorreo(value.email);
+    const dniValidado = validarDNI(value.DNI)
 
 
-    const Udni :userSchema | undefined = await AccesToUserCollection.findOne({ DNI: value.DNI })
-    const Utlf: userSchema | undefined= await AccesToUserCollection.findOne({ Telefono: value.Telefono })
-    const Uemail : userSchema | undefined= await AccesToUserCollection.findOne({ email: value.email })
+    const user: userSchema | undefined = await AccesToUserCollection
+    .findOne({
+      $or: [
+        { DNI: value.DNI },
+        { Telefono: value.Telefono },
+        { email:value.email },
+      ]
+    });
     const userNew = {...value, IBAN: "ES04" + `${randomIBAN}` }
 
-    if(correoValido){
-        if(!Uemail && !Udni && !Utlf ){
+    if(correoValido && telefonoValido && dniValidado){
+        if(!user){
             await AccesToUserCollection.insertOne(userNew)
             context.response.status = 200
             context.response.body = {userNew}
@@ -75,7 +78,7 @@ type postUser = RouterContext <"/user", Record<string | number, string | undefin
     }else{
         context.response.status = 404;
         context.response.body = {
-            message : "Correo no valido"
+            message : "Correo,telephone number or DNI not valid"
         }
     } 
 }catch(e){
