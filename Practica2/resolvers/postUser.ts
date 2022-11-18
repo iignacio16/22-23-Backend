@@ -21,21 +21,11 @@ type postUser = RouterContext <"/user", Record<string | number, string | undefin
 
 function validarTelefono(Telefono: string) {
     const expReg = /^[0-9]{9}$/;
-    const valido = expReg.test(Telefono)
-    if (valido == true){
-      return true;
-    } else {
-      return false;
-    }
+    return expReg.test(Telefono);
 }
  function validarCorreo(email: string){
     const expReg= /^[a-z0-9!#$%&'+/=?^`{|}~-]+(?:.[a-z0-9!#$%&'+/=?^`{|}~-]+)@(?:[a-z0-9](?:[a-z0-9-][a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/; 
-    const valido = expReg.test(email);
-    if(valido==true){
-        return true;
-    }else{
-        return false;
-    }
+    return expReg.test(email);
 }
  
  export const postUser = async (context: postUser)=>{
